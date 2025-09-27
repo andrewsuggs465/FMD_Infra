@@ -1,0 +1,130 @@
+---
+
+- name: Nginx reverse proxy setup
+  hosts:
+    - hosted
+    - packages
+  become: true
+  become_user: root
+
+  tasks:
+
+    - name: Install from apt
+      ansible.builtin.apt:
+        install_recommends: false
+        state: present
+        name:
+          - nginx
+          # certs
+          - ca-certificates
+          - certbot
+          # logs
+          - logrotate
+          - libnginx-mod-http-geoip
+          - geoip-database
+
+    #
+    # access logs
+    #
+
+    - name: Disable default access log
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^[\s#]*access_log /var/log/nginx/access.log;'
+        line: '# access_log /var/log/nginx/access.log'
+      notify: Reload nginx
+
+    # No IP, only country. No User-Agent.
+    # Based on https://fdroid.gitlab.io/jekyll-fdroid/en/2019/04/15/privacy-preserving-analytics.html
+    - name: Set nginx access log
+      ansible.builtin.blockinfile:
+        path: /etc/nginx/nginx.conf
+        # Must be in the http{} block. But must also not have two http blocks.
+        insertafter: '^\s*http\s*\{'
+        block: |
+          geoip_country /usr/share/GeoIP/GeoIP.dat;
+          log_format privacy '0.0.0.0 - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "-" $geoip_country_code';
+          access_log /var/log/nginx/access.log privacy;
+        prepend_newline: true
+        append_newline: true
+      notify: Reload nginx
+
+    - name: Set up logrotate
+      ansible.builtin.copy:
+        dest: /etc/logrotate.d/nginx
+        owner: root
+        group: root
+        mode: "u=rw,g=rw,o=r"
+        # Rotate daily, keep the last 60 days.
+        # Because as volunteers, we cannot check the logs often, so keep them a bit longer.
+        # And logs should not contain private data anyway.
+        # https://manpages.ubuntu.com/manpages/jammy/en/man8/logrotate.8.html
+        # https://nginx.org/en/docs/control.html
+        content: |
+          /var/log/nginx/access.log {
+              daily
+              rotate 60
+              missingok
+              sharedscripts
+              postrotate
+                  [ ! -f /var/run/nginx.pid ] || kill -USR1 `cat /var/run/nginx.pid`
+              endscript
+          }
+
+    #
+    # HTTP/80 conf
+    #
+
+    - name: Create webroot directory for ACME
+      ansible.builtin.file:
+        path: /var/www/acme/
+        owner: www-data
+        group: www-data
+        mode: "u=rwx,g=rwx,o=rx"
+        state: directory
+
+    - name: Copy ACME conf to sites-available
+      ansible.builtin.copy:
+        src: "files/nginx/acme.conf"
+        dest: "/etc/nginx/sites-available/acme.conf"
+        owner: root
+        group: root
+        mode: "u=rw,g=rw,o=r"
+      notify: Reload nginx
+
+    - name: Symlink ACME conf to sites-enabled
+      ansible.builtin.file:
+        src: "/etc/nginx/sites-available/acme.conf"
+        dest: "/etc/nginx/sites-enabled/acme.conf"
+        state: link
+      notify: Reload nginx
+
+    # HTTPS/443 confs and getting certs are in dedicated playbooks
+
+    - name: Enable certbot renewal timer
+      ansible.builtin.systemd_service:
+        name: certbot.timer
+        enabled: true
+        state: started
+
+    - name: Reload nginx after certbot renews
+      ansible.builtin.lineinfile:
+        path: /etc/letsencrypt/cli.ini
+        regexp: '^[\s#]*deploy-hook = systemctl reload nginx'
+        line: 'deploy-hook = systemctl reload nginx'
+
+    # - name: Cronjob to renew certificates
+    #   ansible.builtin.cron:
+    #     name: renew certs
+    #     job: 'certbot renew --deploy-hook "systemctl reload nginx"'
+    #     user: root
+    #     hour: "3"
+    #     minute: "45"
+    #     state: present
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.systemd_service:
+        name: nginx
+        enabled: true
+        state: reloaded

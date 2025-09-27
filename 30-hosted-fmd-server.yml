@@ -1,0 +1,19 @@
+---
+
+- name: Set up hosted FMD Server
+  hosts:
+    - hosted
+  become: true
+  become_user: root
+
+  tasks:
+
+    - name: Deploy hosted beta server
+      ansible.builtin.include_role:
+        name: fmd-server
+      vars:
+        fmd_server_domain: server-beta.fmd-foss.org
+        fmd_server_env: beta
+        fmd_server_binary: TODO (needs a manually uploaded precompiled binary)
+
+    # TODO: prod, fmd.nulide.de

@@ -1,0 +1,43 @@
+# https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html
+
+[Unit]
+Description=FMD Server {{ fmd_server_env }}
+Documentation=https://gitlab.com/fmd-foss/fmd-server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/fmd-server-{{ fmd_server_env }} serve --config "/etc/fmd-server-{{ fmd_server_env }}/config.yml" --db-dir "/var/lib/fmd-server-{{ fmd_server_env }}/db"
+Type=simple
+Restart=always
+User=fmd-server-{{ fmd_server_env }}
+Group=fmd-server-{{ fmd_server_env }}
+
+# Hardening
+# https://blog.sergeantbiggs.net/posts/hardening-applications-with-systemd/
+# https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+# In the order in which they appear in the systemd.exec docs.
+# Check with "systemd-analyze security fmd-server-{{ fmd_server_env }}.service"
+ProtectProc=invisible
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

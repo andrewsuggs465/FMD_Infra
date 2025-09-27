@@ -1,0 +1,36 @@
+---
+- name: Set up user accounts for maintainers
+  hosts: all
+  become: true
+  become_user: root
+
+  tasks:
+
+    - name: Create maintainer group
+      ansible.builtin.group:
+        name: maintainer
+        state: present
+
+    - name: Create user account for maintainers
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        # Generate the password with:
+        # `openssl passwd -6`   or   `mkpasswd --method=sha-512`
+        # Then place the password hash into an Ansible vault (to be double sure).
+        # See https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module
+        password: "{{ item.password }}"
+        shell: /usr/bin/bash
+        create_home: true
+        append: true
+        groups:
+          - maintainer
+          - sudo
+        state: present
+      loop: "{{ maintainers }}"
+
+    - name: Add authorized_key for maintainers
+      ansible.posix.authorized_key:
+        user: "{{ item.name }}"
+        key: "public_keys/{{ item.name }}"
+        state: present
+      loop: "{{ maintainers }}"

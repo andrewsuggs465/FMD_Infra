@@ -1,0 +1,10 @@
+---
+
+ipv6:
+  intf: eth0
+  addr: "2a00:11c0:47:3a81::10/128"
+  gateway: "fe80::1"
+
+maintainers:
+  - name: thore
+    password: "{{ vault_foxtrot_pwd_thore }}"
