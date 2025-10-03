@@ -12,15 +12,57 @@
     system: true
     state: present
 
-- name: Symlink binary
-  ansible.builtin.file:
-    src: "/package/server/{{ fmd_server_binary }}"
-    dest: "/usr/bin/fmd-server-{{ fmd_server_env }}"
+- name: Install apt dependencies
+  ansible.builtin.apt:
+    install_recommends: false
+    state: present
+    name:
+      - zip
+      - unzip
+
+- name: Extract binary
+  ansible.builtin.unarchive:
+    src: "/packages/server/{{ fmd_server_zip }}"
+    remote_src: true
+    dest: "/tmp/"
+    include:
+      - "fmd-server"
     owner: root
     group: root
     mode: "u=rwx,g=rx,o=rx"
-    state: link
   notify: Restart FMD Server
+
+- name: Extract binary
+  ansible.builtin.unarchive:
+    src: "/packages/server/{{ fmd_server_zip }}"
+    dest: "/tmp/"
+    remote_src: true
+    include:
+      - "fmd-server"
+    owner: root
+    group: root
+    mode: "u=rw,g=,o="
+  notify: Restart FMD Server
+
+- name: Copy binary in-place
+  ansible.builtin.copy:
+    src: "/tmp/fmd-server"
+    dest: "/usr/bin/fmd-server-{{ fmd_server_env }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "u=rwx,g=rx,o=rx"
+  notify: Restart FMD Server
+
+# TODO: "/tmp/fmd-server" is not (re)moved.
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "/etc/fmd-server-{{ fmd_server_env }}"
+    owner: root
+    group: root
+    mode: "u=rwx,g=rwx,o=rx"
+    state: directory
 
 - name: Set up config
   ansible.builtin.template:
