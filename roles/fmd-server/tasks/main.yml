@@ -23,18 +23,6 @@
 - name: Extract binary
   ansible.builtin.unarchive:
     src: "/packages/server/{{ fmd_server_zip }}"
-    remote_src: true
-    dest: "/tmp/"
-    include:
-      - "fmd-server"
-    owner: root
-    group: root
-    mode: "u=rwx,g=rx,o=rx"
-  notify: Restart FMD Server
-
-- name: Extract binary
-  ansible.builtin.unarchive:
-    src: "/packages/server/{{ fmd_server_zip }}"
     dest: "/tmp/"
     remote_src: true
     include:
