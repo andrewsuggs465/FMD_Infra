@@ -14,6 +14,6 @@
       vars:
         fmd_server_domain: server-beta.fmd-foss.org
         fmd_server_env: beta
-        fmd_server_binary: TODO (needs a manually uploaded precompiled binary)
+        fmd_server_binary: "/package/server/fmd-server-v0.12.0.zip"
 
     # TODO: prod, fmd.nulide.de
