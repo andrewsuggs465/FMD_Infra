@@ -1,0 +1,98 @@
+---
+
+- name: Basic host setup
+  hosts: all
+  become: true
+  become_user: root
+
+  tasks:
+
+    # For brevity, only check in this playbook, don't repeat it everywhere.
+    - name: Enforce Debian
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Debian"
+          - ansible_distribution_release == "trixie"
+
+    - name: Install basic tools
+      ansible.builtin.apt:
+        install_recommends: false
+        state: present
+        name:
+          - curl
+          - fail2ban
+          - htop
+          - nano
+          - net-tools  # e.g. ifconfig
+          - sudo
+          - tree
+          - unattended-upgrades
+          - vim
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+        use: systemd
+
+    # https://helpcenter.netcup.com/en/wiki/server/ip but slightly different
+    # Needs a reboot or "ifdown eth0 && ifup eth0"
+    - name: Set IPv6 address
+      ansible.builtin.copy:
+        dest: /etc/network/interfaces.d/60-fmd-ipv6.cfg
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
+        content: |
+          iface {{ ipv6.intf }} inet6 static
+              address {{ ipv6.addr }}
+              gateway {{ ipv6.gateway }}
+
+    #
+    # SSH
+    #
+    # WARNING: This playbook should only be rolled out AFTER per-maintainer
+    # user accounts are created (by ssh-ing in as root and rolling out the "users" playbook).
+    # After that, maintainers should ssh in with their account, and locally elevate to root.
+
+    - name: "[sshd] disallow password auth (require pubkey)"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^[\s#]*PasswordAuthentication .*'
+        line: 'PasswordAuthentication no'
+      notify: Restart sshd
+
+    - name: "[sshd] disallow root login"
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^[\s#]*PermitRootLogin .*'
+        line: 'PermitRootLogin no'
+      notify: Restart sshd
+
+    #
+    # fail2ban
+    #
+
+    - name: Lock down fail2ban
+      ansible.builtin.copy:
+        src: "files/strictban.conf"
+        dest: "/etc/fail2ban/jail.d/strictban.conf"
+        mode: '0640'
+      notify: Restart fail2ban
+
+
+    # TODO: notifications for needs-restart
+
+
+  handlers:
+
+    - name: Restart fail2ban
+      ansible.builtin.systemd_service:
+        name: fail2ban
+        enabled: true
+        state: restarted
+
+    - name: Restart sshd
+      ansible.builtin.systemd_service:
+        name: sshd
+        enabled: true
+        state: restarted

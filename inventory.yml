@@ -1,0 +1,13 @@
+---
+# Right now, all "logical" hosts are all on the same "physical" host/VM.
+# However, for future extensibility, we already group hosts by logical function.
+
+# Publicly hosted FMD Server
+hosted:
+  hosts:
+    foxtrot.fmd-foss.org:
+
+# Package downloads and releases
+packages:
+  hosts:
+    foxtrot.fmd-foss.org:

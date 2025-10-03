@@ -1,0 +1,13 @@
+---
+
+- name: Restart FMD Server
+  ansible.builtin.systemd_service:
+    name: "fmd-server-{{ fmd_server_env }}"
+    enabled: true
+    state: restarted
+
+- name: Reload nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: reloaded

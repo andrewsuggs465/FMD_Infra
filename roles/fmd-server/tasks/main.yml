@@ -1,0 +1,135 @@
+---
+
+#
+# Basics
+#
+
+- name: Create user
+  ansible.builtin.user:
+    name: "fmd-server-{{ fmd_server_env }}"
+    create_home: false
+    shell: /sbin/nologin
+    system: true
+    state: present
+
+- name: Install apt dependencies
+  ansible.builtin.apt:
+    install_recommends: false
+    state: present
+    name:
+      - zip
+      - unzip
+
+- name: Extract binary
+  ansible.builtin.unarchive:
+    src: "/packages/server/{{ fmd_server_zip }}"
+    dest: "/tmp/"
+    remote_src: true
+    include:
+      - "fmd-server"
+    owner: root
+    group: root
+    mode: "u=rw,g=,o="
+  notify: Restart FMD Server
+
+- name: Copy binary in-place
+  ansible.builtin.copy:
+    src: "/tmp/fmd-server"
+    dest: "/usr/bin/fmd-server-{{ fmd_server_env }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "u=rwx,g=rx,o=rx"
+  notify: Restart FMD Server
+
+# TODO: "/tmp/fmd-server" is not (re)moved.
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "/etc/fmd-server-{{ fmd_server_env }}"
+    owner: root
+    group: root
+    mode: "u=rwx,g=rwx,o=rx"
+    state: directory
+
+- name: Set up config
+  ansible.builtin.template:
+    src: "./roles/fmd-server/templates/fmd-server.yml"
+    dest: "/etc/fmd-server-{{ fmd_server_env }}/config.yml"
+    owner: root
+    group: root
+    mode: "u=rw,g=rw,o=r"
+  notify: Restart FMD Server
+
+- name: Set up database directory
+  ansible.builtin.file:
+    path: "/var/lib/fmd-server-{{ fmd_server_env }}/db"
+    owner: "fmd-server-{{ fmd_server_env }}"
+    group: "fmd-server-{{ fmd_server_env }}"
+    mode: "u=rwx,g=rwx,o="
+    state: directory
+
+- name: Set up run directory (for Unix socket)
+  ansible.builtin.file:
+    path: "/var/run/fmd-server-{{ fmd_server_env }}/"
+    owner: "fmd-server-{{ fmd_server_env }}"
+    group: "fmd-server-{{ fmd_server_env }}"
+    mode: "u=rwx,g=rwx,o=rx"
+    state: directory
+
+#
+# systemd
+#
+
+- name: Copy systemd unit file
+  ansible.builtin.template:
+    src: "./roles/fmd-server/templates/fmd-server.service"
+    dest: "/etc/systemd/system/fmd-server-{{ fmd_server_env }}.service"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: Restart FMD Server
+
+- name: Start and enable systemd service
+  ansible.builtin.systemd_service:
+    name: "fmd-server-{{ fmd_server_env }}.service"
+    state: started
+    daemon_reload: true
+    enabled: true
+
+#
+# certbot
+#
+
+- name: Check if cert is already present
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/renewal/{{ fmd_server_domain }}.conf"
+  register: renewal_conf
+
+- name: Request initial certificate
+  ansible.builtin.shell:
+    cmd: "certbot certonly --non-interactive --agree-tos --webroot -w /var/www/acme/ -d {{ fmd_server_domain }} "
+  notify: Reload nginx
+  when: not renewal_conf.stat.exists
+
+#
+# nginx
+#
+
+- name: Copy nginx conf to sites-available
+  ansible.builtin.template:
+    src: "./roles/fmd-server/templates/nginx.conf"
+    dest: "/etc/nginx/sites-available/fmd-server-{{ fmd_server_env }}.conf"
+    owner: root
+    group: root
+    mode: "u=rw,g=rw,o=r"
+  notify: Reload nginx
+
+- name: Symlink nginx conf to sites-enabled
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/fmd-server-{{ fmd_server_env }}.conf"
+    dest: "/etc/nginx/sites-enabled/fmd-server-{{ fmd_server_env }}.conf"
+    state: link
+  notify: Reload nginx
+
+# TODO: Backups
