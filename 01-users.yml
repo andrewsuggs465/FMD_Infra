@@ -31,6 +31,6 @@
     - name: Add authorized_key for maintainers
       ansible.posix.authorized_key:
         user: "{{ item.name }}"
-        key: "public_keys/{{ item.name }}"
+        key: "{{ lookup('file', 'public_keys/{{ item.name }}') }}"
         state: present
       loop: "{{ maintainers }}"

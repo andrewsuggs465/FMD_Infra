@@ -22,6 +22,7 @@
           - curl
           - fail2ban
           - htop
+          - nano
           - net-tools  # e.g. ifconfig
           - sudo
           - tree
