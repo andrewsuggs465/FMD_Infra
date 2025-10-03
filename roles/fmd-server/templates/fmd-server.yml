@@ -14,7 +14,7 @@ UnixSocketPath: "/var/run/fmd-server-{{ fmd_server_env }}/fmd.sock" # /tmp/fmd.s
 # modifications are made. This considered insecure practice, if you
 # do it, consider setting a umask for the daemon user before starting it.
 # Must start with a leading 0.
-UnixSocketChmod: 0660
+UnixSocketChmod: 0666
 
 # The ports FMD Server should listen on.
 # Set the port value to -1 to disable it.
