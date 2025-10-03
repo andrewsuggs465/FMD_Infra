@@ -78,7 +78,7 @@
 
 - name: Request initial certificate
   ansible.builtin.shell:
-    cmd: "certbot certonly --non-interactive --agree-tos --webroot /var/www/acme/ -d {{ fmd_server_domain }} "
+    cmd: "certbot certonly --non-interactive --agree-tos --webroot -w /var/www/acme/ -d {{ fmd_server_domain }} "
   notify: Reload nginx
   when: not renewal_conf.stat.exists
 
