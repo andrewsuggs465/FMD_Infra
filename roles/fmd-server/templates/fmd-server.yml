@@ -49,4 +49,4 @@ RemoteIpHeader: "X-Real-IP" # X-Real-IP
 TileServerUrl: "" # https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 
 # Address and port to run Prometheus metrics exporter on.
-MetricsAddrPort: "[::1]:9100"
+MetricsAddrPort: "[::1]:{{ fmd_server_metrics_port }}"

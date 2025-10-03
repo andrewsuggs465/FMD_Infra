@@ -15,5 +15,6 @@
         fmd_server_domain: server-beta.fmd-foss.org
         fmd_server_env: beta
         fmd_server_zip: "fmd-server-v0.12.0.zip"
+        fmd_server_metrics_port: "9101"
 
     # TODO: prod, fmd.nulide.de
