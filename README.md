@@ -24,8 +24,7 @@ Only trusted, long-term, and core maintainers of FMD should have access to these
 1. Set up the SSH config on your laptop:
 
    ```conf
-   Host fmd-foxtrot
-       HostName foxtrot.fmd-foss.org
+   Host foxtrot.fmd-foss.org
        User thore # replace
        Port 22
        IdentityFile ~/.ssh/id_fmd_admin
