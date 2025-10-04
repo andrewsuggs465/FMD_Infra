@@ -17,6 +17,8 @@
     install_recommends: false
     state: present
     name:
+      - sqlite3 # for debugging the DB
+      # for unzipping the release
       - zip
       - unzip
 
