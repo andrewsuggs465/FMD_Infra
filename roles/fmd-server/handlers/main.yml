@@ -1,5 +1,11 @@
 ---
 
+- name: Restart fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    enabled: true
+    state: restarted
+
 - name: Restart FMD Server
   ansible.builtin.systemd_service:
     name: "fmd-server-{{ fmd_server_env }}"

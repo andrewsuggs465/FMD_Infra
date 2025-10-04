@@ -132,4 +132,28 @@
     state: link
   notify: Reload nginx
 
+#
+# fail2ban
+# This is intentionally a shared jail for all FMD Servers on this host.
+# https://gitlab.com/fmd-foss/fmd-server/-/blob/v0.12.0/docs/fail2ban.md
+#
+
+- name: Copy fail2ban filter
+  ansible.builtin.copy:
+    src: "./roles/fmd-server/templates/fail2ban-filter.conf"
+    dest: "/etc/fail2ban/filter.d/fmd-server.local"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: Restart fail2ban
+
+- name: Copy fail2ban jail
+  ansible.builtin.copy:
+    src: "./roles/fmd-server/templates/fail2ban-jail.conf"
+    dest: "/etc/fail2ban/jail.d/fmd-server.local"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: Restart fail2ban
+
 # TODO: Backups
