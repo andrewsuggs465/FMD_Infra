@@ -19,8 +19,10 @@
         install_recommends: false
         state: present
         name:
+          - apt-transport-https
           - curl
           - fail2ban
+          - gpg
           - htop
           - nano
           - net-tools  # e.g. ifconfig

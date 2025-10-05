@@ -16,6 +16,8 @@
     prometheus_version: "3.6.0"
     prometheus_checksum: "2002ef4a55a64161affccd2786c7081d4e3b3a8d08786a98b3bb110971414916"
 
+    grafana_domain: "grafana.fmd-foss.org"
+
   tasks:
 
     #
@@ -103,9 +105,126 @@
     #
     # Grafana
     #
-    # TODO
+
+    - name: Set Grafana PGP key
+      ansible.builtin.copy:
+        src: "files/grafana.gpg"
+        # .gpg is binary, .asc is ASCII-armored
+        dest: "/etc/apt/keyrings/grafana.asc"
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
+
+    - name: Add Grafana repository to apt
+      become: true
+      ansible.builtin.apt_repository:
+        repo: 'deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main'
+
+    - name: Install Grafana from apt
+      ansible.builtin.apt:
+        install_recommends: false
+        update_cache: true
+        state: present
+        name:
+          - grafana
+      notify: Restart grafana
+
+    - name: Set Grafana config
+      ansible.builtin.lineinfile:
+        path: /etc/grafana/grafana.ini
+        regexp: '^[\s#;]*{{ item.key }} = .*'
+        line: '{{ item.key }} = {{ item.value }}'
+        # This is needed because some keys occur in multiple sections.
+        insertafter: '^\[{{ item.section }}\]$'
+        firstmatch: true
+        backup: true
+      notify: Restart grafana
+      loop:
+        - section: "server"
+          key: "http_addr"
+          value: "127.0.0.1" # grafana doesn't like [::1]
+
+        - section: "server"
+          key: "domain"
+          value: "grafana.fmd-foss.org"
+
+        - section: "analytics"
+          key: "reporting_enabled"
+          value: "false"
+
+        - section: "security"
+          key: "secret_key"
+          value: "{{ vault_grafana_secret_key }}"
+
+        - section: "security"
+          key: "cookie_secure"
+          value: "true"
+
+        - section: "security"
+          key: "content_security_policy"
+          value: "true"
+
+        - section: "security"
+          key: "csrf_trusted_origins"
+          value: "grafana.fmd-foss.org"
+
+        - section: "users"
+          key: "allow_sign_up"
+          value: "false"
+
+        - section: "auth.anonymous"
+          key: "hide_version"
+          value: "true"
+
+    #
+    # certbot Grafana
+    #
+
+    - name: Check if cert is already present
+      ansible.builtin.stat:
+        path: "/etc/letsencrypt/renewal/{{ grafana_domain }}.conf"
+      register: renewal_conf
+
+    - name: Request initial certificate
+      ansible.builtin.shell:
+        cmd: "certbot certonly --non-interactive --agree-tos --webroot -w /var/www/acme/ -d {{ grafana_domain }} "
+      notify: Reload nginx
+      when: not renewal_conf.stat.exists
+
+    #
+    # nginx Grafana
+    #
+
+    - name: Copy nginx conf to sites-available
+      ansible.builtin.template:
+        src: "files/nginx/grafana.conf"
+        dest: "/etc/nginx/sites-available/grafana.conf"
+        owner: root
+        group: root
+        mode: "u=rw,g=rw,o=r"
+      notify: Reload nginx
+
+    - name: Symlink nginx conf to sites-enabled
+      ansible.builtin.file:
+        src: "/etc/nginx/sites-available/grafana.conf"
+        dest: "/etc/nginx/sites-enabled/grafana.conf"
+        state: link
+      notify: Reload nginx
 
   handlers:
+
+    - name: Reload nginx
+      ansible.builtin.systemd_service:
+        name: nginx
+        enabled: true
+        state: reloaded
+
+    - name: Restart grafana
+      ansible.builtin.systemd_service:
+        name: grafana-server
+        daemon_reload: true
+        enabled: true
+        state: restarted
 
     - name: Restart prometheus
       ansible.builtin.systemd_service:
