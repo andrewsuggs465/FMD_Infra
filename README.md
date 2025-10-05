@@ -67,8 +67,17 @@ ansible-vault edit <path/to/vault>
 
 ## Monitoring
 
-Use SSH with port forwarding: `ssh -L localhost:9090:localhost:9090 foxtrot.fmd-foss.org`.
-Then go to <http://localhost:9090/> on your laptop to access the Prometheus UI.
+Prometheus:
+
+- Use SSH with port forwarding: `ssh -L localhost:9090:localhost:9090 foxtrot.fmd-foss.org`.
+- Then go to <http://localhost:9090/> on your laptop to access the Prometheus UI.
+
+Grafana:
+
+- Use the admin account to create a new user account for your day-to-day usage.
+  This user should _not_ be a Grafana admin.
+  Add this user to the "fmd-maintainers" team as "Member".
+- The "fmd-maintainers" team should have "Admin" access to the main dashboards.
 
 ## References
 
