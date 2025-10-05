@@ -71,14 +71,6 @@
     mode: "u=rwx,g=rwx,o="
     state: directory
 
-- name: Set up run directory (for Unix socket)
-  ansible.builtin.file:
-    path: "/var/run/fmd-server-{{ fmd_server_env }}/"
-    owner: "fmd-server-{{ fmd_server_env }}"
-    group: "fmd-server-{{ fmd_server_env }}"
-    mode: "u=rwx,g=rwx,o=rx"
-    state: directory
-
 #
 # systemd
 #

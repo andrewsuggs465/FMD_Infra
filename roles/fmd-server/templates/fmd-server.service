@@ -40,7 +40,8 @@ SystemCallFilter=@system-service
 SystemCallArchitectures=native
 
 # Necessary weakening
-ReadWritePaths=/var/lib/fmd-server-{{ fmd_server_env }}/ /var/run/fmd-server-{{ fmd_server_env }}
+RuntimeDirectory=fmd-server-{{ fmd_server_env }}
+ReadWritePaths=/var/lib/fmd-server-{{ fmd_server_env }}/
 
 [Install]
 WantedBy=multi-user.target

@@ -9,7 +9,7 @@ DatabaseDir: "/var/lib/fmd-server-{{ fmd_server_env }}/db/" # /var/lib/fmd-serve
 WebDir: "" # /usr/share/fmd-server/web/
 
 # Path to listening UNIX socket. If empty, no unix sockets will be used.
-UnixSocketPath: "/var/run/fmd-server-{{ fmd_server_env }}/fmd.sock" # /tmp/fmd.sock
+UnixSocketPath: "/run/fmd-server-{{ fmd_server_env }}/fmd.sock" # /tmp/fmd.sock
 # Permissions to set on the socket after it is created. If < 0, no
 # modifications are made. This considered insecure practice, if you
 # do it, consider setting a umask for the daemon user before starting it.
