@@ -1,0 +1,43 @@
+[Unit]
+Description=Prometheus
+Documentation=https://prometheus.io/docs/introduction/overview/
+After=network.target
+
+[Service]
+# https://prometheus.io/docs/prometheus/latest/command-line/prometheus/
+# Listen only on localhost, don't expose it to the internet.
+# Keep data for 1 year to monitor long-term trends. The data should not contain any personal information.
+ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --web.listen-address=[::1]:9090 --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=365d
+Type=simple
+Restart=always
+User=prometheus
+Group=prometheus
+
+# Hardening, same as FMD Server
+ProtectProc=invisible
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+# Necessary weakening
+ReadWritePaths=/prometheus
+
+[Install]
+WantedBy=multi-user.target

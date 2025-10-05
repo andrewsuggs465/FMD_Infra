@@ -1,0 +1,38 @@
+[Unit]
+Description=Prometheus node_exporter
+Documentation=https://prometheus.io/docs/guides/node-exporter/
+After=network.target
+
+[Service]
+# Listen only on localhost, don't expose it to the internet.
+ExecStart=/usr/local/bin/node_exporter --web.listen-address=[::1]:9100
+Type=simple
+Restart=always
+User=node_exporter
+Group=node_exporter
+
+# Hardening, similar to FMD Server, but broader access needed to fetch all metrics
+; ProtectProc=invisible
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+; PrivateDevices=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+; SystemCallFilter=@system-service
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

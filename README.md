@@ -65,6 +65,11 @@ ansible-vault edit <path/to/vault>
 
 - For now, maintainers manually use `scp` to upload them to the `/packages` directory.
 
+## Monitoring
+
+Use SSH with port forwarding: `ssh -L localhost:9090:localhost:9090 foxtrot.fmd-foss.org`.
+Then go to <http://localhost:9090/> on your laptop to access the Prometheus UI.
+
 ## References
 
 - Ansible docs: <https://docs.ansible.com/>

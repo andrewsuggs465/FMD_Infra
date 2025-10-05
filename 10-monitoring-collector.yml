@@ -1,0 +1,115 @@
+---
+
+# See:
+# - https://prometheus.io/docs/prometheus/latest/installation/
+# - https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+
+- name: Set up Prometheus and Grafana
+  hosts:
+    # TODO: A dedicated host for monitoring and log collection would be nice.
+    - foxtrot.fmd-foss.org
+  become: true
+  become_user: root
+
+  vars:
+    # https://prometheus.io/download/#prometheus
+    prometheus_version: "3.6.0"
+    prometheus_checksum: "2002ef4a55a64161affccd2786c7081d4e3b3a8d08786a98b3bb110971414916"
+
+  tasks:
+
+    #
+    # Prometheus
+    #
+
+    - name: Create user "prometheus"
+      become: true
+      ansible.builtin.user:
+        name: prometheus
+        create_home: false
+        shell: /sbin/nologin
+        state: present
+
+    - name: Download prometheus release
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: /tmp/prometheus.tar.gz
+        checksum: "sha256:{{ prometheus_checksum }}"
+        owner: root
+        mode: "u=rw,g=,o="
+
+    - name: Unpack prometheus
+      ansible.builtin.unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /tmp/
+        remote_src: true
+
+    - name: Copy prometheus+promtool binaries to /usr/local/bin
+      become: true
+      ansible.builtin.copy:
+        src: /tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}
+        dest: /usr/local/bin/{{ item }}
+        owner: root
+        group: root
+        mode: "u=rwx,g=rx,o=rx"
+        remote_src: true
+      loop:
+        - prometheus
+        - promtool
+      notify: Restart prometheus
+
+    - name: Remove tmp files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /tmp/prometheus-{{ prometheus_version }}.linux-amd64
+        - /tmp/prometheus.tar.gz
+
+    - name: Create prometheus data directory
+      ansible.builtin.file:
+        path: "/prometheus"
+        owner: prometheus
+        group: prometheus
+        mode: "u=rwx,g=rx,o=rx"
+        state: directory
+
+    - name: Create prometheus config directory
+      ansible.builtin.file:
+        path: "/etc/prometheus"
+        owner: root
+        group: root
+        mode: "u=rwx,g=rx,o=rx"
+        state: directory
+
+    - name: Copy prometheus.yml
+      ansible.builtin.copy:
+        src: "files/prometheus.yml"
+        dest: "/etc/prometheus/prometheus.yml"
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
+      notify: Restart prometheus
+
+    - name: Copy prometheus systemd unit file
+      ansible.builtin.copy:
+        src: "files/prometheus.service"
+        dest: "/etc/systemd/system/prometheus.service"
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
+      notify: Restart prometheus
+
+    #
+    # Grafana
+    #
+    # TODO
+
+  handlers:
+
+    - name: Restart prometheus
+      ansible.builtin.systemd_service:
+        name: prometheus
+        daemon_reload: true
+        enabled: true
+        state: restarted

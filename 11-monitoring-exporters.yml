@@ -1,0 +1,82 @@
+---
+
+- name: Set up exporters
+  hosts:
+    - all
+  become: true
+  become_user: root
+
+  vars:
+    # https://prometheus.io/download/#node_exporter
+    node_exporter_version: "1.9.1"
+    node_exporter_checksum: "becb950ee80daa8ae7331d77966d94a611af79ad0d3307380907e0ec08f5b4e8"
+
+  tasks:
+
+    #
+    # node_exporter
+    #
+
+    - name: Create user "node_exporter"
+      become: true
+      ansible.builtin.user:
+        name: node_exporter
+        create_home: false
+        shell: /sbin/nologin
+        state: present
+
+    - name: Download node_exporter release
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: /tmp/node_exporter.tar.gz
+        checksum: "sha256:{{ node_exporter_checksum }}"
+        owner: root
+        mode: "u=rw,g=,o="
+
+    - name: Unpack node_exporter
+      ansible.builtin.unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp/
+        remote_src: true
+
+    - name: Copy node_exporter binary to /usr/local/bin
+      become: true
+      ansible.builtin.copy:
+        src: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        owner: root
+        group: root
+        mode: "u=rwx,g=rx,o=rx"
+        remote_src: true
+      notify: Restart node_exporter
+
+    - name: Remove tmp files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64
+        - /tmp/node_exporter.tar.gz
+
+    - name: Copy node_exporter systemd unit file
+      ansible.builtin.copy:
+        src: "files/node_exporter.service"
+        dest: "/etc/systemd/system/node_exporter.service"
+        owner: root
+        group: root
+        mode: "u=rw,g=r,o=r"
+      notify: Restart node_exporter
+
+    #
+    # fail2ban exporter
+    #
+    # TODO
+
+  handlers:
+
+    - name: Restart node_exporter
+      ansible.builtin.systemd_service:
+        name: node_exporter
+        daemon_reload: true
+        enabled: true
+        state: restarted
