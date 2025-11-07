@@ -24,8 +24,10 @@
           - fail2ban
           - gpg
           - htop
+          - man-db
           - nano
           - net-tools  # e.g. ifconfig
+          - rsync
           - sudo
           - tree
           - unattended-upgrades

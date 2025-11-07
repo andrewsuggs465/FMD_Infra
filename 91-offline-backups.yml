@@ -1,0 +1,36 @@
+---
+
+# Offline backups:
+# - Maintainers SSH in using the "offlinebackup" user and rsync data to an offline USB stick.
+# - The "offlinebackup" user is a member of the relevant groups that it needs to read all important directories.
+# - This minimises exposure, while still allowing backups. In particular, we don't need to use root.
+
+- name: Basic host setup
+  hosts: all
+  become: true
+  become_user: root
+
+  tasks:
+
+    - name: Create backup user account
+      ansible.builtin.user:
+        name: "offlinebackup" # a user "backup" already exists on Debian
+        password: "!" # disable password
+        shell: /usr/bin/bash
+        create_home: true # needed for .ssh/authorized_keys
+        append: true
+        # This role assumes that these groups already exist.
+        groups:
+          - grafana
+          - prometheus
+          - maintainer # /packages
+          - fmd-server-beta
+          - fmd-server-prod
+        state: present
+
+    - name: Add authorized_key for maintainers
+      ansible.posix.authorized_key:
+        user: "offlinebackup"
+        key: "{{ lookup('file', 'public_keys/{{ item.name }}') }}"
+        state: present
+      loop: "{{ maintainers }}"
