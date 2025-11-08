@@ -1,0 +1,52 @@
+---
+
+- name: Set up hosted FMD Server
+  hosts:
+    - hosted
+  become: true
+  become_user: root
+
+  tasks:
+
+    #
+    # certbot
+    #
+
+    - name: Check if cert is already present
+      ansible.builtin.stat:
+        path: "/etc/letsencrypt/renewal/fmd.nulide.de.conf"
+      register: renewal_conf
+
+    - name: Request initial certificate
+      ansible.builtin.shell:
+        cmd: "certbot certonly --non-interactive --agree-tos --webroot -w /var/www/acme/ -d fmd.nulide.de"
+      notify: Reload nginx
+      when: not renewal_conf.stat.exists
+
+    #
+    # main conf
+    #
+
+    - name: Copy nginx conf to sites-available
+      ansible.builtin.copy:
+        src: "files/nginx/fmd-nulide-de.conf"
+        dest: "/etc/nginx/sites-available/fmd-nulide-de.conf"
+        owner: root
+        group: root
+        mode: "u=rw,g=rw,o=r"
+      notify: Reload nginx
+
+    - name: Symlink nginx conf to sites-enabled
+      ansible.builtin.file:
+        src: "/etc/nginx/sites-available/fmd-nulide-de.conf"
+        dest: "/etc/nginx/sites-enabled/fmd-nulide-de.conf"
+        state: link
+      notify: Reload nginx
+
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.systemd_service:
+        name: nginx
+        enabled: true
+        state: reloaded
