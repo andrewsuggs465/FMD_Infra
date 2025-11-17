@@ -34,3 +34,14 @@
         key: "{{ lookup('file', 'public_keys/{{ item.name }}') }}"
         state: present
       loop: "{{ maintainers }}"
+
+    - name: Put helper scripts
+      ansible.builtin.copy:
+        src: "scripts/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0754'
+        owner: root
+        group: root
+      loop:
+        - start-services.sh
+        - stop-services.sh
