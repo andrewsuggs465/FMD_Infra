@@ -28,7 +28,7 @@
     dest: "/tmp/"
     remote_src: true
     include:
-      - "fmd-server"
+      - "fmd-server-amd64"
     owner: root
     group: root
     mode: "u=rw,g=,o="
@@ -36,7 +36,7 @@
 
 - name: Copy binary in-place
   ansible.builtin.copy:
-    src: "/tmp/fmd-server"
+    src: "/tmp/fmd-server-amd64"
     dest: "/usr/bin/fmd-server-{{ fmd_server_env }}"
     remote_src: true
     owner: root
