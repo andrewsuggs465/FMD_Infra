@@ -24,7 +24,7 @@
           - grafana
           - prometheus
           - maintainer # /packages
-          - fmd-server-beta
+          - fmd-server-edge
           - fmd-server-prod
         state: present
 

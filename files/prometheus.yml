@@ -10,7 +10,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9100']
 
-  - job_name: 'fmd-server-beta-exporter'
+  - job_name: 'fmd-server-edge-exporter'
     static_configs:
       - targets: ['localhost:9101']
 

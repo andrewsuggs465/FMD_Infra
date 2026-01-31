@@ -8,16 +8,16 @@
 
   tasks:
 
-    - name: Deploy hosted beta server
+    - name: Deploy hosted edge server
       ansible.builtin.include_role:
         name: fmd-server
       vars:
-        fmd_server_domain: server-beta.fmd-foss.org
-        fmd_server_env: beta
-        fmd_server_zip: "fmd-server-v0.13.0.zip"
+        fmd_server_domain: server-edge.fmd-foss.org
+        fmd_server_env: edge
+        fmd_server_zip: "fmd-server-v0.14.0.zip"
         fmd_server_metrics_port: "9101"
-        # Public value. Only to force users to acknowledge that the beta server comes with no guarantees.
-        fmd_server_registration_token: "unstable"
+        # Public value. Only to force users to acknowledge that the edge server comes with no guarantees.
+        fmd_server_registration_token: ""
 
     - name: Deploy hosted prod server
       ansible.builtin.include_role:

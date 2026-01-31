@@ -22,7 +22,7 @@ HOST="offlinebackup@foxtrot.fmd-foss.org"
 rsync --archive --verbose --delete \
     "${HOST}:/packages" \
     "${HOST}:/prometheus" \
-    "${HOST}:/var/lib/fmd-server-beta" \
+    "${HOST}:/var/lib/fmd-server-edge" \
     "${HOST}:/var/lib/fmd-server-prod" \
     "${HOST}:/var/lib/grafana" \
     "${OUTPUTDIR}" # destination

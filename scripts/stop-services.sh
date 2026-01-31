@@ -6,7 +6,7 @@
 set -eux
 
 systemctl stop fmd-server-prod.service
-systemctl stop fmd-server-beta.service
+systemctl stop fmd-server-edge.service
 systemctl stop grafana-server.service
 systemctl stop prometheus.service
 
