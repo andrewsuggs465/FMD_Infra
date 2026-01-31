@@ -8,8 +8,8 @@
 
   vars:
     # https://prometheus.io/download/#node_exporter
-    node_exporter_version: "1.9.1"
-    node_exporter_checksum: "becb950ee80daa8ae7331d77966d94a611af79ad0d3307380907e0ec08f5b4e8"
+    node_exporter_version: "1.10.2"
+    node_exporter_checksum: "c46e5b6f53948477ff3a19d97c58307394a29fe64a01905646f026ddc32cb65b"
 
   tasks:
 
