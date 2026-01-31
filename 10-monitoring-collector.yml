@@ -13,8 +13,8 @@
 
   vars:
     # https://prometheus.io/download/#prometheus
-    prometheus_version: "3.6.0"
-    prometheus_checksum: "2002ef4a55a64161affccd2786c7081d4e3b3a8d08786a98b3bb110971414916"
+    prometheus_version: "3.9.1"
+    prometheus_checksum: "86a6999dd6aacbd994acde93c77cfa314d4be1c8e7b7c58f444355c77b32c584"
 
     grafana_domain: "grafana.fmd-foss.org"
 
