@@ -14,7 +14,7 @@
       vars:
         fmd_server_domain: server-edge.fmd-foss.org
         fmd_server_env: edge
-        fmd_server_zip: "fmd-server-v0.14.2.zip"
+        fmd_server_zip: "fmd-server-v0.15.0.zip"
         fmd_server_metrics_port: "9101"
         # Public value. Only to force users to acknowledge that the edge server comes with no guarantees.
         fmd_server_registration_token: ""
