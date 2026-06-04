@@ -25,6 +25,6 @@
       vars:
         fmd_server_domain: server.fmd-foss.org
         fmd_server_env: prod
-        fmd_server_zip: "fmd-server-v0.14.2.zip"
+        fmd_server_zip: "fmd-server-v0.15.0.zip"
         fmd_server_metrics_port: "9102"
         fmd_server_registration_token: ""
