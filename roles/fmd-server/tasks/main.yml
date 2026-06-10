@@ -111,7 +111,12 @@
     enabled: true
 
 #
-# certbot
+# certbot (standalone mode)
+#
+# nginx cannot reload a config that references cert files that don't exist yet,
+# so webroot is a chicken-and-egg problem on first run. Standalone mode lets
+# certbot bind to port 80 itself: stop nginx → get cert → start nginx.
+# Renewals use the same approach via pre/post hooks.
 #
 
 - name: Check if cert is already present
@@ -119,14 +124,41 @@
     path: "/etc/letsencrypt/renewal/{{ fmd_server_domain }}.conf"
   register: renewal_conf
 
-- name: Request initial certificate
+- name: Stop nginx for initial certificate request
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: stopped
+  when: not renewal_conf.stat.exists
+
+- name: Request initial certificate (standalone)
   ansible.builtin.shell:
     cmd: >-
-      certbot certonly --non-interactive --agree-tos
+      certbot certonly --standalone --non-interactive --agree-tos
       {{ '--email ' + fmd_server_certbot_email if fmd_server_certbot_email is defined else '--register-unsafely-without-email' }}
-      --webroot -w /var/www/acme/ -d {{ fmd_server_domain }}
-  notify: Reload nginx
+      -d {{ fmd_server_domain }}
   when: not renewal_conf.stat.exists
+
+- name: Start nginx after initial certificate
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: started
+  when: not renewal_conf.stat.exists
+
+- name: Install renewal pre-hook to stop nginx before standalone renewal
+  ansible.builtin.copy:
+    dest: /etc/letsencrypt/renewal-hooks/pre/nginx-stop.sh
+    content: "#!/bin/sh\nsystemctl stop nginx\n"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install renewal post-hook to start nginx after standalone renewal
+  ansible.builtin.copy:
+    dest: /etc/letsencrypt/renewal-hooks/post/nginx-start.sh
+    content: "#!/bin/sh\nsystemctl start nginx\n"
+    owner: root
+    group: root
+    mode: "0755"
 
 #
 # nginx

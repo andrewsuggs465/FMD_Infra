@@ -1,2 +1,12 @@
 .ansible/
 .vscode/
+
+# Ansible vault password file — store at ~/.ansible/vault-pass (outside this repo)
+vault-pass
+*.vault-pass
+
+# Safety net: block unencrypted vault files from being committed accidentally.
+# vault.yml files should always be ansible-vault encrypted before committing.
+# Check with: ansible-vault view host_vars/*/vault.yml
+**/vault.yml.plaintext
+**/vault.yml.bak

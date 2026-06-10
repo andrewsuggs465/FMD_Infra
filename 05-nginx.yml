@@ -22,6 +22,41 @@
           - logrotate
           - libnginx-mod-http-geoip
           - geoip-database
+          # firewall
+          - ufw
+
+    # OCI Ubuntu ships with a blanket iptables REJECT rule that fires before ufw.
+    # Insert explicit ACCEPT rules at the top of INPUT so they take priority.
+    - name: Allow HTTP and HTTPS in iptables (IPv4)
+      ansible.builtin.shell: |
+        iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null  || iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+        iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+      changed_when: true
+
+    - name: Allow HTTP and HTTPS in iptables (IPv6)
+      ansible.builtin.shell: |
+        ip6tables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null  || ip6tables -I INPUT -p tcp --dport 80 -j ACCEPT
+        ip6tables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || ip6tables -I INPUT -p tcp --dport 443 -j ACCEPT
+      changed_when: true
+
+    - name: Install iptables-persistent to survive reboots
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+        install_recommends: false
+
+    - name: Save iptables rules
+      ansible.builtin.shell: netfilter-persistent save
+      changed_when: true
+
+    - name: Open SSH, HTTP, and HTTPS in ufw
+      ansible.builtin.shell: |
+        ufw allow 22/tcp comment 'SSH'
+        ufw allow 80/tcp comment 'HTTP (ACME challenge)'
+        ufw allow 443/tcp comment 'HTTPS'
+        ufw --force enable
+      register: ufw_out
+      changed_when: "'Rules updated' in ufw_out.stdout"
 
     #
     # access logs
@@ -110,8 +145,8 @@
     - name: Reload nginx after certbot renews
       ansible.builtin.lineinfile:
         path: /etc/letsencrypt/cli.ini
-        regexp: '^[\s#]*deploy-hook = systemctl reload nginx'
-        line: 'deploy-hook = systemctl reload nginx'
+        regexp: '^[\s#]*deploy-hook = systemctl'
+        line: 'deploy-hook = systemctl reload-or-restart nginx'
 
     # - name: Cronjob to renew certificates
     #   ansible.builtin.cron:
