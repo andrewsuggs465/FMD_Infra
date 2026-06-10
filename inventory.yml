@@ -6,6 +6,7 @@
 hosted:
   hosts:
     foxtrot.fmd-foss.org:
+    lintu-server.duckdns.org:
 
 # Package downloads and releases
 packages:

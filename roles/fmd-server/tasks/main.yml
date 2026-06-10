@@ -22,9 +22,18 @@
       - zip
       - unzip
 
+# When fmd_server_local_zip is defined, upload the zip from the Ansible controller
+# before extracting. Otherwise the zip must already be on the host at /packages/server/.
+- name: Upload release zip from local machine
+  ansible.builtin.copy:
+    src: "{{ fmd_server_local_zip }}"
+    dest: "/tmp/{{ fmd_server_zip }}"
+  when: fmd_server_local_zip is defined
+  notify: Restart FMD Server
+
 - name: Extract binary
   ansible.builtin.unarchive:
-    src: "/packages/server/{{ fmd_server_zip }}"
+    src: "{{ '/tmp/' + fmd_server_zip if fmd_server_local_zip is defined else '/packages/server/' + fmd_server_zip }}"
     dest: "/tmp/"
     remote_src: true
     include:
@@ -112,7 +121,10 @@
 
 - name: Request initial certificate
   ansible.builtin.shell:
-    cmd: "certbot certonly --non-interactive --agree-tos --webroot -w /var/www/acme/ -d {{ fmd_server_domain }} "
+    cmd: >-
+      certbot certonly --non-interactive --agree-tos
+      {{ '--email ' + fmd_server_certbot_email if fmd_server_certbot_email is defined else '--register-unsafely-without-email' }}
+      --webroot -w /var/www/acme/ -d {{ fmd_server_domain }}
   notify: Reload nginx
   when: not renewal_conf.stat.exists
 

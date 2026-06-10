@@ -8,11 +8,13 @@
   tasks:
 
     # For brevity, only check in this playbook, don't repeat it everywhere.
+    # Set enforce_os_check: false in host_vars to skip on non-Debian hosts (e.g. Ubuntu on OCI).
     - name: Enforce Debian
       ansible.builtin.assert:
         that:
           - ansible_distribution == "Debian"
           - ansible_distribution_release == "trixie"
+      when: enforce_os_check | default(true)
 
     - name: Install basic tools
       ansible.builtin.apt:
@@ -43,6 +45,7 @@
 
     # https://helpcenter.netcup.com/en/wiki/server/ip but slightly different
     # Needs a reboot or "ifdown eth0 && ifup eth0"
+    # Only applies to hosts that define the ipv6 var (not needed on OCI which uses DHCP6/netplan).
     - name: Set IPv6 address
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/60-fmd-ipv6.cfg
@@ -53,6 +56,7 @@
           iface {{ ipv6.intf }} inet6 static
               address {{ ipv6.addr }}
               gateway {{ ipv6.gateway }}
+      when: ipv6 is defined
 
     #
     # SSH

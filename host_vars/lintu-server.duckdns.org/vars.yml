@@ -1,0 +1,13 @@
+---
+# OCI Free Tier — Intel x86_64 — Ubuntu 22.04
+# ansible_user stays as 'ubuntu' (OCI default); 'andrew' is the human login account.
+ansible_user: ubuntu
+
+# Disable the Debian-only OS check; Ubuntu is close enough for our purposes.
+enforce_os_check: false
+
+# No static IPv6 config needed — OCI handles addressing via DHCP/netplan.
+
+maintainers:
+  - name: andrew
+    password: "{{ vault_lintu_pwd_andrew }}"

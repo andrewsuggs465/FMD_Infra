@@ -1,0 +1,12 @@
+---
+# IMPORTANT: Fill in real values below, then encrypt this file:
+#   ansible-vault encrypt host_vars/lintu-server.duckdns.org/vault.yml
+#
+# Generate a password hash (SHA-512):
+#   openssl passwd -6
+#
+# Generate a registration token:
+#   openssl rand -base64 32
+
+vault_lintu_pwd_andrew: "REPLACE_WITH_HASH_FROM_openssl_passwd_-6"
+vault_lintu_registration_token: "REPLACE_WITH_RANDOM_TOKEN"
