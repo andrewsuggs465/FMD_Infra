@@ -1,5 +1,5 @@
 ---
-# Deploy the SecurePouch fork of fmd-server to lintu-server.duckdns.org.
+# Deploy the SecurePouch fork of fmd-server to lintu-server.myvnc.com.
 #
 # BEFORE RUNNING:
 #   1. Build the server binary and package it:
@@ -9,19 +9,19 @@
 #        zip dist/fmd-server-securepouch-v0.1.0.zip fmd-server-amd64 fmd-server-ctl-amd64
 #
 #   2. Fill in vault.yml placeholders, then encrypt:
-#        ansible-vault encrypt host_vars/lintu-server.duckdns.org/vault.yml
+#        ansible-vault encrypt host_vars/lintu-server.myvnc.com/vault.yml
 #
 # RUN ORDER (first-time setup):
-#   1. ansible-playbook 01-users.yml       --limit lintu-server.duckdns.org --ask-vault-pass
-#   2. ansible-playbook 02-basics.yml      --limit lintu-server.duckdns.org --ask-vault-pass
-#   3. ansible-playbook 05-nginx.yml       --limit lintu-server.duckdns.org --ask-vault-pass
+#   1. ansible-playbook 01-users.yml       --limit lintu-server.myvnc.com --ask-vault-pass
+#   2. ansible-playbook 02-basics.yml      --limit lintu-server.myvnc.com --ask-vault-pass
+#   3. ansible-playbook 05-nginx.yml       --limit lintu-server.myvnc.com --ask-vault-pass
 #   4. ansible-playbook 40-securepouch-server.yml                           --ask-vault-pass
 #
-# After step 1 you can also SSH in as andrew@lintu-server.duckdns.org.
+# After step 1 you can also SSH in as andrew@lintu-server.myvnc.com.
 
 - name: Deploy SecurePouch FMD Server
   hosts:
-    - lintu-server.duckdns.org
+    - lintu-server.myvnc.com
   become: true
   become_user: root
 
@@ -31,7 +31,7 @@
       ansible.builtin.include_role:
         name: fmd-server
       vars:
-        fmd_server_domain: lintu-server.duckdns.org
+        fmd_server_domain: lintu-server.myvnc.com
         fmd_server_env: prod
         fmd_server_zip: fmd-server-securepouch-v0.1.0.zip
         fmd_server_local_zip: ../fmd-server/dist/fmd-server-securepouch-v0.1.0.zip
